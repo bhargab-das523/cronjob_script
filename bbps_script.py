@@ -389,7 +389,7 @@ def execute_bill_fetch(
             "failure_code": err_code,
             "failure_reason": err_msg,
             "bill_found": "Y" if bill_detail else "N",
-            "billdetail_pk": bill_obj.id if bill_obj else None,
+            "billdetail_pk": bill_obj.bill_detail_pk if bill_obj else None,
             "bill_amount": bill_detail.get("amount") if bill_detail else None,
             "bill_date": bill_detail.get("timestamp") if bill_detail else None,
             "bill_due_date": bill_detail.get("due_date") if bill_detail else None,
