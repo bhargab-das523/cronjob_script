@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 ist_tz = pytz.timezone("Asia/Kolkata")
 TODAY = datetime.now(ist_tz).date()
 
+CRON_EXECUTION_CSV_DIR = "/home/ubuntu/Documents/cron_execution_logs"
 
 class BillType(Enum):
     """Enumeration for different bill types"""
@@ -266,18 +267,22 @@ def write_cron_execution_csv(row: Dict) -> None:
     """
     Append a single cron execution row to CSV.
     Filename: cron_execution_<YYYY-MM-DD>.csv
+    Stored under CRON_EXECUTION_CSV_DIR
     """
     try:
         today_str = datetime.now(ist_tz).strftime("%Y-%m-%d")
         csv_filename = f"cron_execution_{today_str}.csv"
 
+        os.makedirs(CRON_EXECUTION_CSV_DIR, exist_ok=True)
+        file_path = os.path.join(CRON_EXECUTION_CSV_DIR, csv_filename)
+
         df = pd.DataFrame([row])
-        file_exists = os.path.exists(csv_filename)
+        file_exists = os.path.exists(file_path)
 
         df.to_csv(
-            csv_filename,
+            file_path,
             mode="a",
-            header=not file_exists,
+            header=not file_exists, # create header only if current file doesn't exist
             index=False,
         )
     except Exception as err:
@@ -370,10 +375,13 @@ def execute_bill_fetch(
             exc_info=True,
         )
 
+    ended_at = timezone.now()
+
     write_cron_execution_csv(
         {
             "cron_name": cron_name,
             "started_at": started_at,
+            "ended_at": ended_at,
             "account_info_id": account_info_id,
             "biller_id": bbps_biller_id,
             "attempt_number": attempt_number,
