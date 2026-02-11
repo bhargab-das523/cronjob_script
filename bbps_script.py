@@ -52,6 +52,7 @@ class CronName(Enum):
     NO_DUE_DATE = "auto_fetch_and_save_no_due_date_bill"
     WEEKLY = "auto_fetch_and_save_weekly_bill"
     CUSTOM_FETCH = "auto_fetch_and_save_custom_fetch_bill"
+    GMAIL = "gmail_auto_fetch_and_save_credit_card_bill"
 
 
 @dataclass
@@ -307,7 +308,7 @@ def execute_bill_fetch(
     **kwargs,
 ) -> Tuple[str, str, bool]:
     """Core bill fetching logic"""
-    started_at = timezone.now()
+    started_at = datetime.now(ist_tz).strftime("%Y-%m-%d")
     bill_detail = None
     bill_obj = None
     err_code = None
@@ -389,7 +390,7 @@ def execute_bill_fetch(
             "failure_code": err_code,
             "failure_reason": err_msg,
             "bill_found": "Y" if bill_detail else "N",
-            "billdetail_pk": bill_obj.bill_detail_pk if bill_obj else None,
+            "bill_detail_pk": bill_obj.bill_detail_pk if bill_obj else None,
             "bill_amount": bill_detail.get("amount") if bill_detail else None,
             "bill_date": bill_detail.get("timestamp") if bill_detail else None,
             "bill_due_date": bill_detail.get("due_date") if bill_detail else None,
@@ -458,6 +459,7 @@ def gmail_auto_fetch_and_save_credit_card_bill(
             customer_phone_number=customer_phone_number,
             retry_on_next_day=retry_on_next_day,
             customer_params=customer_params,
+            cron_name=CronName.GMAIL.value,
         )
     except Exception as exc:
         logger.error(f"Credit card bill fetch failed for {account_info_id}: {exc}")
