@@ -31,6 +31,7 @@ TODAY = datetime.now(ist_tz).date()
 
 CRON_EXECUTION_CSV_DIR = "/home/ubuntu/Documents/cron_execution_logs"
 
+
 class BillType(Enum):
     """Enumeration for different bill types"""
 
@@ -41,6 +42,7 @@ class BillType(Enum):
     WEEKLY = "weekly"
     CUSTOM_FETCH = "custom_fetch"
 
+
 class CronName(Enum):
     """Enumeration for bill fetch cron job names"""
 
@@ -50,6 +52,7 @@ class CronName(Enum):
     NO_DUE_DATE = "auto_fetch_and_save_no_due_date_bill"
     WEEKLY = "auto_fetch_and_save_weekly_bill"
     CUSTOM_FETCH = "auto_fetch_and_save_custom_fetch_bill"
+
 
 @dataclass
 class BillFetchConfig:
@@ -263,6 +266,7 @@ def save_bill_and_notify(
         logger.error(f"Failed to save bill detail: {e}", exc_info=True)
         raise
 
+
 def write_cron_execution_csv(row: Dict) -> None:
     """
     Append a single cron execution row to CSV.
@@ -282,7 +286,7 @@ def write_cron_execution_csv(row: Dict) -> None:
         df.to_csv(
             file_path,
             mode="a",
-            header=not file_exists, # create header only if current file doesn't exist
+            header=not file_exists,  # create header only if current file doesn't exist
             index=False,
         )
     except Exception as err:
@@ -375,13 +379,10 @@ def execute_bill_fetch(
             exc_info=True,
         )
 
-    ended_at = timezone.now()
-
     write_cron_execution_csv(
         {
             "cron_name": cron_name,
             "started_at": started_at,
-            "ended_at": ended_at,
             "account_info_id": account_info_id,
             "biller_id": bbps_biller_id,
             "attempt_number": attempt_number,
@@ -396,8 +397,8 @@ def execute_bill_fetch(
         }
     )
 
-
     return account_info_id, bbps_biller_id, customer_phone_number, is_bill_fetch
+
 
 # Optimized task definitions using the shared logic
 @shared_task(queue="high_priority")
@@ -425,7 +426,7 @@ def auto_fetch_and_save_credit_card_bill(
             customer_phone_number=customer_phone_number,
             retry_on_next_day=retry_on_next_day,
             customer_params=customer_params,
-            cron_name=CronName.CREDIT_CARD.value
+            cron_name=CronName.CREDIT_CARD.value,
         )
     except Exception as exc:
         logger.error(f"Credit card bill fetch failed for {account_info_id}: {exc}")
@@ -461,7 +462,7 @@ def auto_fetch_and_save_baja_bill(
             unmasked_account_number=unmasked_account_number,
             skip_sms=skip_sms,
             save_account_info_to_csv=save_account_info_to_csv,
-            cron_name=CronName.BAJA.value
+            cron_name=CronName.BAJA.value,
         )
     except Exception as exc:
         logger.error(f"BAJA bill fetch failed for {account_info_id}: {exc}")
