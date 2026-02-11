@@ -227,7 +227,7 @@ def save_bill_and_notify(
         obj = BillDetail.objects.create(**bill_detail)
 
         if skip_sms:
-            logger.info(f"Skipping SMS notification for bill {obj.id} as skip_sms=True")
+            logger.info(f"Skipping SMS notification for bill {obj.bill_detail_pk}")
         else:
             try:
                 bill_date = obj.due_date or obj.timestamp
@@ -309,6 +309,7 @@ def execute_bill_fetch(
                 bill_type=config.bill_type,
                 skip_sms=skip_sms,
                 save_account_info_to_csv=save_account_info_to_csv,
+                account_info_id=account_info_id,
             )
         else:
             logger.info(
@@ -336,6 +337,37 @@ def execute_bill_fetch(
 # Optimized task definitions using the shared logic
 @shared_task(queue="high_priority")
 def auto_fetch_and_save_credit_card_bill(
+    account_info_id: str,
+    bbps_biller_id: str,
+    customer_name: str,
+    customer_phone_number: str,
+    customer_params: Dict,
+    retry_on_next_day: bool = False,
+):
+    """Optimized credit card bill fetching task"""
+    config = BillFetchConfig(
+        bill_type=BillType.CREDIT_CARD,
+        error_tag="[BBPS_CREDIT_CARD]",
+        check_due_date=True,
+    )
+
+    try:
+        return execute_bill_fetch(
+            config=config,
+            account_info_id=account_info_id,
+            bbps_biller_id=bbps_biller_id,
+            customer_name=customer_name,
+            customer_phone_number=customer_phone_number,
+            retry_on_next_day=retry_on_next_day,
+            customer_params=customer_params,
+        )
+    except Exception as exc:
+        logger.error(f"Credit card bill fetch failed for {account_info_id}: {exc}")
+
+    return account_info_id, bbps_biller_id, customer_phone_number, False
+
+@shared_task(queue="high_priority")
+def gmail_auto_fetch_and_save_credit_card_bill(
     account_info_id: str,
     bbps_biller_id: str,
     customer_name: str,
