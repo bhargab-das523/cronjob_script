@@ -241,7 +241,7 @@ def save_bill_and_notify(
         obj = BillDetail.objects.create(**bill_detail)
 
         if skip_sms:
-            logger.info(f"Skipping SMS notification for bill {obj.bill_detail_pk}")
+            logger.info(f"Skipping SMS notification for bill {obj.id} as skip_sms=True")
         else:
             try:
                 bill_date = obj.due_date or obj.timestamp
@@ -390,7 +390,7 @@ def execute_bill_fetch(
             "failure_code": err_code,
             "failure_reason": err_msg,
             "bill_found": "Y" if bill_detail else "N",
-            "bill_detail_pk": bill_obj.bill_detail_pk if bill_obj else None,
+            "bill_detail_pk": bill_obj.id if bill_obj else None,
             "bill_amount": bill_detail.get("amount") if bill_detail else None,
             "bill_date": bill_detail.get("timestamp") if bill_detail else None,
             "bill_due_date": bill_detail.get("due_date") if bill_detail else None,
