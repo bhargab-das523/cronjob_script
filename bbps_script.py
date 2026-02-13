@@ -337,7 +337,6 @@ def execute_bill_fetch(
                 unmasked_account_number=unmasked_account_number,
             )
         else:
-            customer_params = kwargs.get("customer_params", {})
             bill_detail, err_msg, err_code = BillFetchStrategy.fetch_standard_bill(
                 customer_name=customer_name,
                 customer_phone_number=customer_phone_number,
