@@ -304,7 +304,6 @@ def execute_bill_fetch(
     skip_sms: bool = False,
     save_account_info_to_csv: bool = False,
     cron_name: str = "unknown_cron",
-    attempt_number: int = 1,
     **kwargs,
 ) -> Tuple[str, str, bool]:
     """Core bill fetching logic"""
@@ -382,7 +381,6 @@ def execute_bill_fetch(
             "started_at": started_at,
             "account_info_id": account_info_id,
             "biller_id": bbps_biller_id,
-            "attempt_number": attempt_number,
             "failure_code": err_code,
             "failure_reason": err_msg,
             "bill_found": "Y" if bill_detail else "N",
