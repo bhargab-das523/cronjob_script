@@ -314,7 +314,7 @@ def execute_bill_fetch(
     err_code = None
     err_msg = None
     is_bill_fetch = False
-    customer_params = kwargs.get("customer_params")
+    customer_params = kwargs.get("customer_params", {})
 
     # Validate inputs
     if not validate_bill_fetch_inputs(
@@ -323,10 +323,6 @@ def execute_bill_fetch(
         return account_info_id, customer_phone_number, False
 
     account_info_id = str(account_info_id)
-    is_bill_fetch = False
-    customer_params = None
-    err_code = None
-    err_msg = None
 
     try:
         # Fetch bill based on type
