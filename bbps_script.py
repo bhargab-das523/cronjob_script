@@ -234,7 +234,7 @@ def save_bill_and_notify(
     skip_sms: bool = False,
     save_account_info_to_csv: bool = False,
     account_info_id: str = None,
-) -> bool:
+) -> tuple[bool, BillDetail | None]:
     """Save bill detail and send notifiation if appropriate"""
     try:
         # Create bill detail
