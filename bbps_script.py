@@ -347,7 +347,7 @@ def execute_bill_fetch(
 
         # Process successful bill fetch
         if bill_detail:
-            is_bill_fetch = save_bill_and_notify(
+            is_bill_fetch, bill_obj = save_bill_and_notify(
                 bill_detail=bill_detail,
                 customer_phone_number=customer_phone_number,
                 bill_type=config.bill_type,
