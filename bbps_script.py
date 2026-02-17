@@ -383,7 +383,7 @@ def execute_bill_fetch(
             "biller_id": bbps_biller_id,
             "failure_code": err_code,
             "failure_reason": err_msg,
-            "bill_found": "Yes" if bill_detail else "No",
+            "bill_found":is_bill_fetch,
             "bill_detail_pk": bill_obj.bill_detail_pk if bill_obj else None,
             "bill_amount": bill_detail.get("amount") if bill_detail else None,
             "bill_date": bill_detail.get("timestamp") if bill_detail else None,
