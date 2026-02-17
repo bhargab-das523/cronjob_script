@@ -386,7 +386,7 @@ def execute_bill_fetch(
             "bill_found":is_bill_fetch,
             "bill_detail_pk": bill_obj.bill_detail_pk if bill_obj else None,
             "bill_amount": bill_detail.get("amount") if bill_detail else None,
-            "bill_date": bill_detail.get("timestamp") if bill_detail else None,
+            "bill_date": bill_detail.get("bill_date") if bill_detail else None,
             "bill_due_date": bill_detail.get("due_date") if bill_detail else None,
             "param_json": customer_params,
         }
