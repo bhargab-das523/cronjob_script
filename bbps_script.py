@@ -307,7 +307,7 @@ def execute_bill_fetch(
     **kwargs,
 ) -> Tuple[str, str, bool]:
     """Core bill fetching logic"""
-    started_at = datetime.now(ist_tz).strftime("%Y-%m-%d")
+    started_at = datetime.now(ist_tz).strftime("%Y-%m-%d %H:%M:%S")
     bill_detail = None
     bill_obj = None
 
