@@ -241,7 +241,7 @@ def save_bill_and_notify(
         obj = BillDetail.objects.create(**bill_detail)
 
         if skip_sms:
-            logger.info(f"Skipping SMS notification for bill {obj.id} as skip_sms=True")
+            logger.info(f"Skipping SMS notification for bill {obj.bill_detail_pk}")
         else:
             try:
                 bill_date = obj.due_date or obj.timestamp
