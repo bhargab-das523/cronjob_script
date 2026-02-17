@@ -310,10 +310,6 @@ def execute_bill_fetch(
     started_at = datetime.now(ist_tz).strftime("%Y-%m-%d")
     bill_detail = None
     bill_obj = None
-    err_code = None
-    err_msg = None
-    is_bill_fetch = False
-    customer_params = kwargs.get("customer_params", {})
 
     # Validate inputs
     if not validate_bill_fetch_inputs(
@@ -322,6 +318,10 @@ def execute_bill_fetch(
         return account_info_id, customer_phone_number, False
 
     account_info_id = str(account_info_id)
+    is_bill_fetch = False
+    customer_params = None
+    err_code = None
+    err_msg = None
 
     try:
         # Fetch bill based on type
@@ -331,6 +331,7 @@ def execute_bill_fetch(
                 raise ValueError("unmasked_account_number is required for BAJA bills")
 
             bill_detail, err_msg, err_code = BillFetchStrategy.fetch_baja_bill(
+                customer_params = kwargs.get("customer_params", {}),
                 customer_name=customer_name,
                 customer_phone_number=customer_phone_number,
                 loan_id=account_info_id,
