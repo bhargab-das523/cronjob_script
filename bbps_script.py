@@ -331,7 +331,6 @@ def execute_bill_fetch(
                 raise ValueError("unmasked_account_number is required for BAJA bills")
 
             bill_detail, err_msg, err_code = BillFetchStrategy.fetch_baja_bill(
-                customer_params = kwargs.get("customer_params", {}),
                 customer_name=customer_name,
                 customer_phone_number=customer_phone_number,
                 loan_id=account_info_id,
