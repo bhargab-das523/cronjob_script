@@ -544,4 +544,4 @@ def auto_fetch_and_save_custom_fetch_bill(
     except Exception as exc:
         logger.error(f"Custom bill fetch failed for {account_info_id}: {exc}")
 
-    return account_info_id, bbps_biller_id, customer_phone_number, False
+    return account_info_id, bbps_biller_id, customer_phone_number, False 
