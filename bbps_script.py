@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 ist_tz = pytz.timezone("Asia/Kolkata")
 TODAY = datetime.now(ist_tz).date()
 
+CRON_EXECUTION_CSV_DIR = "/home/ubuntu/Documents/cron_execution_logs"
+
 
 class BillType(Enum):
     """Enumeration for different bill types"""
@@ -39,6 +41,18 @@ class BillType(Enum):
     NO_DUE_DATE = "no_due_date"
     WEEKLY = "weekly"
     CUSTOM_FETCH = "custom_fetch"
+
+
+class CronName(Enum):
+    """Enumeration for bill fetch cron job names"""
+
+    CREDIT_CARD = "auto_fetch_and_save_credit_card_bill"
+    BAJA = "auto_fetch_and_save_baja_bill"
+    DUE_DATE = "auto_fetch_and_save_due_date_bill"
+    NO_DUE_DATE = "auto_fetch_and_save_no_due_date_bill"
+    WEEKLY = "auto_fetch_and_save_weekly_bill"
+    CUSTOM_FETCH = "auto_fetch_and_save_custom_fetch_bill"
+    GMAIL = "gmail_auto_fetch_and_save_credit_card_bill"
 
 
 @dataclass
@@ -220,7 +234,7 @@ def save_bill_and_notify(
     skip_sms: bool = False,
     save_account_info_to_csv: bool = False,
     account_info_id: str = None,
-) -> bool:
+) -> tuple[bool, BillDetail | None]:
     """Save bill detail and send notifiation if appropriate"""
     try:
         # Create bill detail
@@ -247,11 +261,37 @@ def save_bill_and_notify(
         if save_account_info_to_csv and account_info_id:
             write_account_info_to_csv(account_info_id, customer_phone_number)
 
-        return True
+        return True, obj
 
     except Exception as e:
         logger.error(f"Failed to save bill detail: {e}", exc_info=True)
         raise
+
+
+def write_cron_execution_csv(row: Dict) -> None:
+    """
+    Append a single cron execution row to CSV.
+    Filename: cron_execution_<YYYY-MM-DD>.csv
+    Stored under CRON_EXECUTION_CSV_DIR
+    """
+    try:
+        today_str = datetime.now(ist_tz).strftime("%Y-%m-%d")
+        csv_filename = f"cron_execution_{today_str}.csv"
+
+        os.makedirs(CRON_EXECUTION_CSV_DIR, exist_ok=True)
+        file_path = os.path.join(CRON_EXECUTION_CSV_DIR, csv_filename)
+
+        df = pd.DataFrame([row])
+        file_exists = os.path.exists(file_path)
+
+        df.to_csv(
+            file_path,
+            mode="a",
+            header=not file_exists,  # create header only if current file doesn't exist
+            index=False,
+        )
+    except Exception as err:
+        logger.error("Failed to write cron execution CSV", exc_info=err)
 
 
 def execute_bill_fetch(
@@ -263,9 +303,13 @@ def execute_bill_fetch(
     retry_on_next_day: bool = False,
     skip_sms: bool = False,
     save_account_info_to_csv: bool = False,
+    cron_name: str = "unknown_cron",
     **kwargs,
 ) -> Tuple[str, str, bool]:
     """Core bill fetching logic"""
+    started_at = datetime.now(ist_tz).strftime("%Y-%m-%d")
+    bill_detail = None
+    bill_obj = None
 
     # Validate inputs
     if not validate_bill_fetch_inputs(
@@ -331,6 +375,23 @@ def execute_bill_fetch(
             exc_info=True,
         )
 
+    write_cron_execution_csv(
+        {
+            "cron_name": cron_name,
+            "started_at": started_at,
+            "account_info_id": account_info_id,
+            "biller_id": bbps_biller_id,
+            "failure_code": err_code,
+            "failure_reason": err_msg,
+            "bill_found": "Y" if bill_detail else "N",
+            "bill_detail_pk": bill_obj.id if bill_obj else None,
+            "bill_amount": bill_detail.get("amount") if bill_detail else None,
+            "bill_date": bill_detail.get("timestamp") if bill_detail else None,
+            "bill_due_date": bill_detail.get("due_date") if bill_detail else None,
+            "param_json": customer_params,
+        }
+    )
+
     return account_info_id, bbps_biller_id, customer_phone_number, is_bill_fetch
 
 
@@ -360,6 +421,7 @@ def auto_fetch_and_save_credit_card_bill(
             customer_phone_number=customer_phone_number,
             retry_on_next_day=retry_on_next_day,
             customer_params=customer_params,
+            cron_name=CronName.CREDIT_CARD.value,
         )
     except Exception as exc:
         logger.error(f"Credit card bill fetch failed for {account_info_id}: {exc}")
@@ -391,6 +453,7 @@ def gmail_auto_fetch_and_save_credit_card_bill(
             customer_phone_number=customer_phone_number,
             retry_on_next_day=retry_on_next_day,
             customer_params=customer_params,
+            cron_name=CronName.GMAIL.value,
         )
     except Exception as exc:
         logger.error(f"Credit card bill fetch failed for {account_info_id}: {exc}")
@@ -426,6 +489,7 @@ def auto_fetch_and_save_baja_bill(
             unmasked_account_number=unmasked_account_number,
             skip_sms=skip_sms,
             save_account_info_to_csv=save_account_info_to_csv,
+            cron_name=CronName.BAJA.value,
         )
     except Exception as exc:
         logger.error(f"BAJA bill fetch failed for {account_info_id}: {exc}")
@@ -454,6 +518,7 @@ def auto_fetch_and_save_due_date_bill(
             customer_name=customer_name,
             customer_phone_number=customer_phone_number,
             customer_params=customer_params,
+            cron_name=CronName.DUE_DATE.value,
         )
     except Exception as exc:
         logger.error(f"Due date bill fetch failed for {account_info_id}: {exc}")
@@ -482,6 +547,7 @@ def auto_fetch_and_save_no_due_date_bill(
             customer_name=customer_name,
             customer_phone_number=customer_phone_number,
             customer_params=customer_params,
+            cron_name=CronName.NO_DUE_DATE.value,
         )
     except Exception as exc:
         logger.error(f"No due date bill fetch failed for {account_info_id}: {exc}")
@@ -508,6 +574,7 @@ def auto_fetch_and_save_weekly_bill(
             customer_name=customer_name,
             customer_phone_number=customer_phone_number,
             customer_params=customer_params,
+            cron_name=CronName.WEEKLY.value,
         )
     except Exception as exc:
         logger.error(f"Weekly bill fetch failed for {account_info_id}: {exc}")
@@ -540,8 +607,9 @@ def auto_fetch_and_save_custom_fetch_bill(
             customer_params=customer_params,
             skip_sms=skip_sms,
             save_account_info_to_csv=save_account_info_to_csv,
+            cron_name=CronName.CUSTOM_FETCH.value,
         )
     except Exception as exc:
         logger.error(f"Custom bill fetch failed for {account_info_id}: {exc}")
 
-    return account_info_id, bbps_biller_id, customer_phone_number, False 
+    return account_info_id, bbps_biller_id, customer_phone_number, False
